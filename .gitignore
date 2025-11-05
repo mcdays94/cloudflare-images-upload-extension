@@ -1,0 +1,27 @@
+# Compiled output
+out/
+*.vsix
+
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Testing files (not needed in repo)
+*-TESTING.md
+QUICKSTART.md
+WINDSURF-TESTING.md
+LOCAL-TESTING-GUIDE.md
+DRAG-DROP-TESTING.md
+PASTE-TESTING.md
+PASTE-DRAGDROP-TESTING.md
+verify-setup.sh
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db

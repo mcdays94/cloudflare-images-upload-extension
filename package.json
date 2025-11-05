@@ -1,0 +1,123 @@
+{
+  "name": "cloudflare-images-upload",
+  "displayName": "Cloudflare Images Upload",
+  "description": "Upload images to Cloudflare Images with drag & drop or paste",
+  "version": "0.1.0",
+  "publisher": "miguelcaetanodias",
+  "icon": "extension_icon.png",
+  "author": {
+    "name": "Miguel Caetano Dias"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/miguelcaetanodias/cloudflare-images-upload"
+  },
+  "bugs": {
+    "url": "https://github.com/miguelcaetanodias/cloudflare-images-upload/issues"
+  },
+  "homepage": "https://github.com/miguelcaetanodias/cloudflare-images-upload#readme",
+  "keywords": [
+    "cloudflare",
+    "images",
+    "upload",
+    "markdown",
+    "cdn",
+    "image-hosting",
+    "drag-drop",
+    "paste",
+    "cloudflare-images"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Cloudflare Images Upload",
+      "properties": {
+        "cloudflareImagesUpload.accountId": {
+          "type": "string",
+          "default": "",
+          "description": "Your Cloudflare Account ID"
+        },
+        "cloudflareImagesUpload.apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "Your Cloudflare API Token with Images:Edit permission"
+        },
+        "cloudflareImagesUpload.accountHash": {
+          "type": "string",
+          "default": "",
+          "description": "Your Cloudflare Account Hash (found in the Images dashboard URL)"
+        },
+        "cloudflareImagesUpload.defaultVariant": {
+          "type": "string",
+          "default": "/public",
+          "description": "Default variant to use for image URLs"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "cloudflareImages.uploadImage",
+        "title": "Upload Image to Cloudflare"
+      },
+      {
+        "command": "cloudflareImages.setup",
+        "title": "Setup Cloudflare Images Upload"
+      }
+    ],
+    "documentDropEdits": [
+      {
+        "dropMimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/jpg",
+          "image/gif",
+          "image/webp",
+          "image/bmp",
+          "image/svg+xml"
+        ]
+      }
+    ],
+    "documentPasteEdits": [
+      {
+        "pasteMimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/jpg",
+          "image/gif",
+          "image/webp",
+          "image/bmp",
+          "image/svg+xml"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "@types/form-data": "^2.2.1",
+    "@types/node": "^16.11.7",
+    "@types/node-fetch": "^2.6.13",
+    "@types/vscode": "^1.105.0",
+    "typescript": "^4.5.5",
+    "vsce": "^2.6.7"
+  }
+}
