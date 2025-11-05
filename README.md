@@ -172,7 +172,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📮 Support
+## ☕ Support This Project
+
+If you find this extension helpful and it saves you time, consider buying me a coffee! Your support helps keep this project maintained and improved.
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
+
+## 📮 Get Help
 
 - **Issues**: [GitHub Issues](https://github.com/mcdays94/cloudflare-images-upload-extension/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/mcdays94/cloudflare-images-upload-extension/discussions)
