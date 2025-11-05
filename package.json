@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -77,6 +77,11 @@
     ],
     "documentDropEdits": [
       {
+        "documentSelector": [
+          {
+            "language": "markdown"
+          }
+        ],
         "dropMimeTypes": [
           "image/png",
           "image/jpeg",
@@ -90,6 +95,11 @@
     ],
     "documentPasteEdits": [
       {
+        "documentSelector": [
+          {
+            "language": "markdown"
+          }
+        ],
         "pasteMimeTypes": [
           "image/png",
           "image/jpeg",
