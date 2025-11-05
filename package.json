@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -11,12 +11,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/miguelcaetanodias/cloudflare-images-upload"
+    "url": "https://github.com/mcdays94/cloudflare-images-upload-extension"
   },
   "bugs": {
-    "url": "https://github.com/miguelcaetanodias/cloudflare-images-upload/issues"
+    "url": "https://github.com/mcdays94/cloudflare-images-upload-extension/issues"
   },
-  "homepage": "https://github.com/miguelcaetanodias/cloudflare-images-upload#readme",
+  "homepage": "https://github.com/mcdays94/cloudflare-images-upload-extension#readme",
   "keywords": [
     "cloudflare",
     "images",
@@ -116,7 +116,7 @@
     "@types/form-data": "^2.2.1",
     "@types/node": "^16.11.7",
     "@types/node-fetch": "^2.6.13",
-    "@types/vscode": "^1.105.0",
+    "@types/vscode": "^1.80.0",
     "typescript": "^4.5.5",
     "vsce": "^2.6.7"
   }
