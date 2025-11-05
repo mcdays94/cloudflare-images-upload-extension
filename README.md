@@ -17,17 +17,28 @@ This is an independent, personal project created by the author. While the author
 
 ## 📦 Installation
 
-### From VSCode Marketplace
+### From Marketplace
 
+**VSCode Marketplace** (for VSCode):
 1. Open VSCode
 2. Go to Extensions (`Ctrl+Shift+X` or `Cmd+Shift+X`)
 3. Search for "Cloudflare Images Upload"
 4. Click Install
 
+**Open VSX Registry** (for Windsurf, VSCodium, and other VSCode alternatives):
+1. Open your editor (Windsurf, VSCodium, etc.)
+2. Go to Extensions
+3. Search for "Cloudflare Images Upload"
+4. Click Install
+
+Or install directly from:
+- [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=miguelcaetanodias.cloudflare-images-upload)
+- [Open VSX Registry](https://open-vsx.org/extension/miguelcaetanodias/cloudflare-images-upload)
+
 ### From VSIX
 
 1. Download the `.vsix` file from [Releases](https://github.com/mcdays94/cloudflare-images-upload-extension/releases)
-2. Open VSCode
+2. Open your editor
 3. Go to Extensions → `...` menu → Install from VSIX
 4. Select the downloaded file
 
