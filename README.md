@@ -26,7 +26,7 @@ This is an independent, personal project created by the author. While the author
 
 ### From VSIX
 
-1. Download the `.vsix` file from [Releases](https://github.com/miguelcaetanodias/cloudflare-images-upload/releases)
+1. Download the `.vsix` file from [Releases](https://github.com/mcdays94/cloudflare-images-upload-extension/releases)
 2. Open VSCode
 3. Go to Extensions → `...` menu → Install from VSIX
 4. Select the downloaded file
@@ -121,8 +121,8 @@ The image is immediately accessible via Cloudflare's global CDN!
 
 ```bash
 # Clone the repository
-git clone https://github.com/miguelcaetanodias/cloudflare-images-upload.git
-cd cloudflare-images-upload
+git clone https://github.com/mcdays94/cloudflare-images-upload-extension.git
+cd cloudflare-images-upload-extension
 
 # Install dependencies
 npm install
@@ -161,27 +161,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🐛 Known Issues
-
-- Large files (>10MB) may take time to upload
-- Multiple simultaneous uploads are processed sequentially
-
-## 🗺️ Roadmap
-
-- [ ] Support for custom image variants
-- [ ] Batch upload progress tracking
-- [ ] Image compression before upload
-- [ ] Support for other Cloudflare services (R2, Stream)
-
 ## 📮 Support
 
-- **Issues**: [GitHub Issues](https://github.com/miguelcaetanodias/cloudflare-images-upload/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/miguelcaetanodias/cloudflare-images-upload/discussions)
-
-## 🙏 Acknowledgments
-
-- Built with [VSCode Extension API](https://code.visualstudio.com/api)
-- Powered by [Cloudflare Images](https://www.cloudflare.com/products/cloudflare-images/)
+- **Issues**: [GitHub Issues](https://github.com/mcdays94/cloudflare-images-upload-extension/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mcdays94/cloudflare-images-upload-extension/discussions)
 
 ## 📊 Release Notes
 
@@ -196,4 +179,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by [Miguel Caetano Dias](https://github.com/miguelcaetanodias)
+Made with ❤️ by [Miguel Caetano Dias](https://github.com/mcdays94)
