@@ -2,10 +2,6 @@
 
 > Upload images to Cloudflare Images with drag & drop, paste, or command palette - automatically insert markdown links.
 
-## ⚠️ Disclaimer
-
-This is an independent, personal project created by the author. While the author is a Cloudflare employee, **this extension is not an official Cloudflare product** and is not affiliated with, endorsed by, or supported by Cloudflare, Inc. This tool was built independently as a side project.
-
 ## ✨ Features
 
 - **🖱️ Drag & Drop**: Drag image files from your file explorer directly into markdown files
@@ -14,6 +10,8 @@ This is an independent, personal project created by the author. While the author
 - **🔗 Auto Markdown Links**: Automatically inserts properly formatted markdown image links
 - **⚡ Progress Notifications**: Real-time upload progress feedback
 - **🎯 Markdown-Only**: Smart activation only in markdown files
+
+> 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
 
 ## 📦 Installation
 
@@ -197,3 +195,7 @@ If you find this extension helpful and it saves you time, consider buying me a c
 ---
 
 Made with ❤️ by [Miguel Caetano Dias](https://github.com/mcdays94)
+
+### Note
+
+While I work at Cloudflare, this is a personal side project I built independently. It's not an official Cloudflare product and isn't affiliated with, endorsed by, or supported by Cloudflare, Inc.
