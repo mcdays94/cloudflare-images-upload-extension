@@ -22,6 +22,9 @@ PASTE-DRAGDROP-TESTING.md
 verify-setup.sh
 test-files/
 
+# Release notes (kept in GitHub releases only)
+RELEASE_NOTES_*.md
+
 # Logs
 *.log
 npm-debug.log*
