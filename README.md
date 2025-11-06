@@ -16,6 +16,7 @@
   - **JSON**: `"url"`
   - **Plain Text**: Raw URL
 - **⚡ Progress Notifications**: Real-time upload progress feedback
+- **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
 > 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
@@ -189,6 +190,18 @@ If you find this extension helpful and it saves you time, consider buying me a c
 - **Discussions**: [GitHub Discussions](https://github.com/mcdays94/cloudflare-images-upload-extension/discussions)
 
 ## 📊 Release Notes
+
+### 0.3.0
+
+- ✅ **Smart Duplicate Detection**: Automatically detects previously uploaded images using SHA-256 hashing
+- ✅ **Persistent Cache**: Stores image hashes locally (30-day retention) to avoid redundant uploads
+- ✅ **User Notifications**: Shows friendly messages when duplicates are detected
+- ✅ **Performance**: Instant duplicate detection with no API calls required
+
+### 0.2.0
+
+- ✅ Enhanced multi-language support
+- ✅ Improved syntax formatting for different file types
 
 ### 0.1.0 (Initial Release)
 

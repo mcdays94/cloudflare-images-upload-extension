@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 
@@ -9,6 +10,73 @@ interface CloudflareConfig {
     apiToken: string;
     accountHash: string;
     defaultVariant: string;
+}
+
+interface ImageCacheEntry {
+    hash: string;
+    url: string;
+    fileName: string;
+    uploadedAt: number;
+}
+
+interface ImageCache {
+    [hash: string]: ImageCacheEntry;
+}
+
+// Global state for image cache
+let imageCache: ImageCache = {};
+let globalState: vscode.Memento | undefined;
+
+// Calculate SHA-256 hash of a file buffer
+function calculateFileHash(buffer: Buffer): string {
+    return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+// Load image cache from global state
+function loadImageCache(): void {
+    if (globalState) {
+        imageCache = globalState.get<ImageCache>('imageCache', {});
+    }
+}
+
+// Save image cache to global state
+async function saveImageCache(): Promise<void> {
+    if (globalState) {
+        await globalState.update('imageCache', imageCache);
+    }
+}
+
+// Add or retrieve image from cache
+function getCachedImage(hash: string): ImageCacheEntry | undefined {
+    return imageCache[hash];
+}
+
+// Add image to cache
+async function addImageToCache(hash: string, url: string, fileName: string): Promise<void> {
+    imageCache[hash] = {
+        hash,
+        url,
+        fileName,
+        uploadedAt: Date.now()
+    };
+    await saveImageCache();
+}
+
+// Clean up old cache entries (older than 30 days)
+async function cleanupOldCacheEntries(): Promise<void> {
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    let hasChanges = false;
+    
+    for (const hash in imageCache) {
+        if (imageCache[hash].uploadedAt < thirtyDaysAgo) {
+            delete imageCache[hash];
+            hasChanges = true;
+        }
+    }
+    
+    if (hasChanges) {
+        await saveImageCache();
+    }
 }
 
 // Helper function to format image URL based on file type
@@ -85,6 +153,7 @@ async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vs
     // Show progress notification
     const uploadPromise = (async () => {
         const uploadedUrls: string[] = [];
+        let duplicateCount = 0;
 
         for (const file of imageFiles) {
             try {
@@ -92,20 +161,32 @@ async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vs
                 const data = await file.data();
                 const buffer = Buffer.from(data);
 
-                // Create a temporary file
-                const tempDir = path.join(require('os').tmpdir(), 'cloudflare-images-upload');
-                if (!fs.existsSync(tempDir)) {
-                    fs.mkdirSync(tempDir, { recursive: true });
+                // Calculate hash to check for duplicates
+                const fileHash = calculateFileHash(buffer);
+                const cachedImage = getCachedImage(fileHash);
+
+                let imageUrl: string | null = null;
+
+                if (cachedImage) {
+                    // Image already uploaded, reuse the URL
+                    imageUrl = cachedImage.url;
+                    duplicateCount++;
+                } else {
+                    // Create a temporary file
+                    const tempDir = path.join(require('os').tmpdir(), 'cloudflare-images-upload');
+                    if (!fs.existsSync(tempDir)) {
+                        fs.mkdirSync(tempDir, { recursive: true });
+                    }
+
+                    const tempFile = path.join(tempDir, `${Date.now()}-${file.name}`);
+                    fs.writeFileSync(tempFile, buffer);
+
+                    // Upload to Cloudflare
+                    imageUrl = await uploadImageToCloudflare(tempFile, cloudflareConfig, fileHash, file.name);
+
+                    // Clean up temp file
+                    fs.unlinkSync(tempFile);
                 }
-
-                const tempFile = path.join(tempDir, `${Date.now()}-${file.name}`);
-                fs.writeFileSync(tempFile, buffer);
-
-                // Upload to Cloudflare
-                const imageUrl = await uploadImageToCloudflare(tempFile, cloudflareConfig);
-
-                // Clean up temp file
-                fs.unlinkSync(tempFile);
 
                 if (imageUrl) {
                     // Format the URL based on the document's language
@@ -115,6 +196,13 @@ async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vs
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to upload ${file.name}: ${error}`);
             }
+        }
+
+        // Show info message if duplicates were detected
+        if (duplicateCount > 0) {
+            vscode.window.showInformationMessage(
+                `${duplicateCount} duplicate image${duplicateCount > 1 ? 's' : ''} detected - reused existing URL${duplicateCount > 1 ? 's' : ''}`
+            );
         }
 
         return uploadedUrls;
@@ -178,6 +266,13 @@ class ImagePasteProvider implements vscode.DocumentPasteEditProvider {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+    // Initialize global state for image cache
+    globalState = context.globalState;
+    loadImageCache();
+    
+    // Clean up old cache entries on activation
+    await cleanupOldCacheEntries();
+    
     const config = vscode.workspace.getConfiguration('cloudflareImagesUpload');
     
     // Register the upload command
@@ -207,7 +302,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
             if (result && result[0]) {
                 const imagePath = result[0].fsPath;
-                const imageUrl = await uploadImageToCloudflare(imagePath, cloudflareConfig);
+                const fileName = path.basename(imagePath);
+                
+                // Check if image was already uploaded
+                const fileBuffer = fs.readFileSync(imagePath);
+                const fileHash = calculateFileHash(fileBuffer);
+                const cachedImage = getCachedImage(fileHash);
+                
+                let imageUrl: string | null = null;
+                
+                if (cachedImage) {
+                    imageUrl = cachedImage.url;
+                    vscode.window.showInformationMessage('Duplicate image detected - reused existing URL');
+                } else {
+                    imageUrl = await uploadImageToCloudflare(imagePath, cloudflareConfig, fileHash, fileName);
+                }
                 
                 if (imageUrl) {
                     const markdown = `![${path.basename(imagePath)}](${imageUrl})`;
@@ -264,17 +373,31 @@ export async function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                // Create a temporary file
-                const tempDir = path.join(context.globalStorageUri.fsPath, 'temp');
-                if (!fs.existsSync(tempDir)) {
-                    fs.mkdirSync(tempDir, { recursive: true });
-                }
+                // Convert base64 to buffer and check for duplicates
+                const imageBuffer = Buffer.from(base64Data, 'base64');
+                const fileHash = calculateFileHash(imageBuffer);
+                const cachedImage = getCachedImage(fileHash);
                 
-                const tempFile = path.join(tempDir, `image-${Date.now()}.png`);
-                fs.writeFileSync(tempFile, base64Data, { encoding: 'base64' });
+                let imageUrl: string | null = null;
+                
+                if (cachedImage) {
+                    imageUrl = cachedImage.url;
+                } else {
+                    // Create a temporary file
+                    const tempDir = path.join(context.globalStorageUri.fsPath, 'temp');
+                    if (!fs.existsSync(tempDir)) {
+                        fs.mkdirSync(tempDir, { recursive: true });
+                    }
+                    
+                    const tempFile = path.join(tempDir, `image-${Date.now()}.png`);
+                    fs.writeFileSync(tempFile, base64Data, { encoding: 'base64' });
 
-                // Upload the image
-                const imageUrl = await uploadImageToCloudflare(tempFile, cloudflareConfig);
+                    // Upload the image
+                    imageUrl = await uploadImageToCloudflare(tempFile, cloudflareConfig, fileHash, 'image.png');
+                    
+                    // Clean up
+                    fs.unlinkSync(tempFile);
+                }
                 
                 // Replace the pasted base64 with the image URL
                 if (imageUrl) {
@@ -287,9 +410,6 @@ export async function activate(context: vscode.ExtensionContext) {
                         editBuilder.replace(range, markdown);
                     });
                 }
-
-                // Clean up
-                fs.unlinkSync(tempFile);
             } catch (error) {
                 vscode.window.showErrorMessage(`Error processing pasted image: ${error}`);
             }
@@ -356,7 +476,12 @@ function getCloudflareConfig(): CloudflareConfig | null {
     };
 }
 
-async function uploadImageToCloudflare(imagePath: string, config: CloudflareConfig): Promise<string | null> {
+async function uploadImageToCloudflare(
+    imagePath: string, 
+    config: CloudflareConfig, 
+    fileHash?: string, 
+    fileName?: string
+): Promise<string | null> {
     try {
         const formData = new FormData();
         formData.append('file', fs.createReadStream(imagePath));
@@ -383,7 +508,14 @@ async function uploadImageToCloudflare(imagePath: string, config: CloudflareConf
         const imageId = data.result.id;
         
         // Construct the public URL
-        return `https://imagedelivery.net/${config.accountHash}/${imageId}${config.defaultVariant}`;
+        const imageUrl = `https://imagedelivery.net/${config.accountHash}/${imageId}${config.defaultVariant}`;
+        
+        // Store in cache if hash and fileName are provided
+        if (fileHash && fileName) {
+            await addImageToCache(fileHash, imageUrl, fileName);
+        }
+        
+        return imageUrl;
     } catch (error) {
         vscode.window.showErrorMessage(`Upload failed: ${error}`);
         return null;
