@@ -13,11 +13,16 @@ QUICKSTART.md
 *-TESTING.md
 WINDSURF-TESTING.md
 LOCAL-TESTING-GUIDE.md
+verify-setup.sh
+test-files/
 DRAG-DROP-TESTING.md
 PASTE-TESTING.md
 PASTE-DRAGDROP-TESTING.md
 PUBLICATION-READY.md
 PUBLISHING-GUIDE.md
 QUICK-START-PUBLISHING.md
-verify-setup.sh
+# IDE
+.vscode/
+.DS_Store
 *.code-workspace
+sandbox.md
