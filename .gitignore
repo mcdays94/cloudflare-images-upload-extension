@@ -8,6 +8,8 @@ node_modules/
 # IDE
 .vscode/
 .DS_Store
+*.code-workspace
+sandbox.md
 
 # Testing files (not needed in repo)
 *-TESTING.md
