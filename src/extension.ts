@@ -296,31 +296,45 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Register drag and drop handler for markdown files
-    const dropProvider = vscode.languages.registerDocumentDropEditProvider(
-        { language: 'markdown' },
-        new ImageDropProvider()
+    // Supported file types
+    const supportedLanguages = [
+        'markdown', 'html', 'php', 'vue', 'svelte', 'jsx', 'tsx',
+        'css', 'scss', 'sass', 'less',
+        'javascript', 'typescript', 'javascriptreact', 'typescriptreact',
+        'json', 'jsonc',
+        'python', 'ruby', 'go', 'rust', 'java', 'csharp', 'cpp', 'c',
+        'plaintext'
+    ];
+
+    // Register drag and drop handler for all supported file types
+    const dropProviders = supportedLanguages.map(lang => 
+        vscode.languages.registerDocumentDropEditProvider(
+            { language: lang },
+            new ImageDropProvider()
+        )
     );
 
-    // Register paste handler for markdown files
-    const pasteProvider = vscode.languages.registerDocumentPasteEditProvider(
-        { language: 'markdown' },
-        new ImagePasteProvider(),
-        {
-            pasteMimeTypes: [
-                'image/png',
-                'image/jpeg',
-                'image/jpg',
-                'image/gif',
-                'image/webp',
-                'image/bmp',
-                'image/svg+xml'
-            ],
-            providedPasteEditKinds: []
-        }
+    // Register paste handler for all supported file types
+    const pasteProviders = supportedLanguages.map(lang =>
+        vscode.languages.registerDocumentPasteEditProvider(
+            { language: lang },
+            new ImagePasteProvider(),
+            {
+                pasteMimeTypes: [
+                    'image/png',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/gif',
+                    'image/webp',
+                    'image/bmp',
+                    'image/svg+xml'
+                ],
+                providedPasteEditKinds: []
+            }
+        )
     );
 
-    context.subscriptions.push(disposable, setupDisposable, dropProvider, pasteProvider);
+    context.subscriptions.push(disposable, setupDisposable, ...dropProviders, ...pasteProviders);
 }
 
 function getCloudflareConfig(): CloudflareConfig | null {
