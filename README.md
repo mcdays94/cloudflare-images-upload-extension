@@ -1,15 +1,22 @@
 # Cloudflare Images Upload for VSCode
 
-> Upload images to Cloudflare Images with drag & drop, paste, or command palette - automatically insert markdown links.
+> Upload images to Cloudflare Images with drag & drop, paste, or command palette - automatically inserts the right syntax for your file type.
 
 ## ✨ Features
 
-- **🖱️ Drag & Drop**: Drag image files from your file explorer directly into markdown files
+- **🖱️ Drag & Drop**: Drag image files from your file explorer directly into any supported file
 - **📋 Paste from Clipboard**: Copy images from anywhere (screenshots, browsers, image editors) and paste into your document
 - **⌨️ Command Palette**: Use the command palette to select and upload images
-- **🔗 Auto Markdown Links**: Automatically inserts properly formatted markdown image links
+- **🎨 Smart Syntax**: Automatically inserts the correct syntax based on file type:
+  - **Markdown**: `![alt](url)`
+  - **HTML/PHP/Vue/Svelte**: `<img src="url" alt="filename" />`
+  - **CSS/SCSS/Sass/Less**: `url('url')`
+  - **JavaScript/TypeScript/React**: `"url"`
+  - **Python/Ruby/Go/Rust/Java/C/C++/C#**: `"url"`
+  - **JSON**: `"url"`
+  - **Plain Text**: Raw URL
 - **⚡ Progress Notifications**: Real-time upload progress feedback
-- **🎯 Markdown-Only**: Smart activation only in markdown files
+- **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
 > 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
 

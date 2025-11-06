@@ -1,8 +1,8 @@
 {
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
-  "description": "Upload images to Cloudflare Images with drag & drop or paste",
-  "version": "0.1.6",
+  "description": "Upload images to Cloudflare Images with drag & drop or paste - works in Markdown, HTML, CSS, JS, and more",
+  "version": "0.2.0",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -80,6 +80,81 @@
         "documentSelector": [
           {
             "language": "markdown"
+          },
+          {
+            "language": "html"
+          },
+          {
+            "language": "php"
+          },
+          {
+            "language": "vue"
+          },
+          {
+            "language": "svelte"
+          },
+          {
+            "language": "jsx"
+          },
+          {
+            "language": "tsx"
+          },
+          {
+            "language": "css"
+          },
+          {
+            "language": "scss"
+          },
+          {
+            "language": "sass"
+          },
+          {
+            "language": "less"
+          },
+          {
+            "language": "javascript"
+          },
+          {
+            "language": "typescript"
+          },
+          {
+            "language": "javascriptreact"
+          },
+          {
+            "language": "typescriptreact"
+          },
+          {
+            "language": "json"
+          },
+          {
+            "language": "jsonc"
+          },
+          {
+            "language": "python"
+          },
+          {
+            "language": "ruby"
+          },
+          {
+            "language": "go"
+          },
+          {
+            "language": "rust"
+          },
+          {
+            "language": "java"
+          },
+          {
+            "language": "csharp"
+          },
+          {
+            "language": "cpp"
+          },
+          {
+            "language": "c"
+          },
+          {
+            "language": "plaintext"
           }
         ],
         "dropMimeTypes": [
@@ -98,6 +173,81 @@
         "documentSelector": [
           {
             "language": "markdown"
+          },
+          {
+            "language": "html"
+          },
+          {
+            "language": "php"
+          },
+          {
+            "language": "vue"
+          },
+          {
+            "language": "svelte"
+          },
+          {
+            "language": "jsx"
+          },
+          {
+            "language": "tsx"
+          },
+          {
+            "language": "css"
+          },
+          {
+            "language": "scss"
+          },
+          {
+            "language": "sass"
+          },
+          {
+            "language": "less"
+          },
+          {
+            "language": "javascript"
+          },
+          {
+            "language": "typescript"
+          },
+          {
+            "language": "javascriptreact"
+          },
+          {
+            "language": "typescriptreact"
+          },
+          {
+            "language": "json"
+          },
+          {
+            "language": "jsonc"
+          },
+          {
+            "language": "python"
+          },
+          {
+            "language": "ruby"
+          },
+          {
+            "language": "go"
+          },
+          {
+            "language": "rust"
+          },
+          {
+            "language": "java"
+          },
+          {
+            "language": "csharp"
+          },
+          {
+            "language": "cpp"
+          },
+          {
+            "language": "c"
+          },
+          {
+            "language": "plaintext"
           }
         ],
         "pasteMimeTypes": [

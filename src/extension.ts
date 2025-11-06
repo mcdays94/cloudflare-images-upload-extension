@@ -11,8 +11,54 @@ interface CloudflareConfig {
     defaultVariant: string;
 }
 
+// Helper function to format image URL based on file type
+function formatImageUrl(imageUrl: string, fileName: string, languageId: string): string {
+    switch (languageId) {
+        case 'html':
+        case 'php':
+        case 'vue':
+        case 'svelte':
+        case 'jsx':
+        case 'tsx':
+            return `<img src="${imageUrl}" alt="${fileName}" />`;
+        
+        case 'markdown':
+            return `![${fileName}](${imageUrl})`;
+        
+        case 'css':
+        case 'scss':
+        case 'sass':
+        case 'less':
+            return `url('${imageUrl}')`;
+        
+        case 'json':
+        case 'jsonc':
+            return `"${imageUrl}"`;
+        
+        case 'javascript':
+        case 'typescript':
+        case 'javascriptreact':
+        case 'typescriptreact':
+            return `"${imageUrl}"`;
+        
+        case 'python':
+        case 'ruby':
+        case 'go':
+        case 'rust':
+        case 'java':
+        case 'csharp':
+        case 'cpp':
+        case 'c':
+            return `"${imageUrl}"`;
+        
+        default:
+            // For plain text and unknown types, just insert the URL
+            return imageUrl;
+    }
+}
+
 // Shared helper function for processing image files from DataTransfer
-async function processImageFiles(dataTransfer: vscode.DataTransfer): Promise<string[] | undefined> {
+async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vscode.TextDocument): Promise<string[] | undefined> {
     // Check if Cloudflare is configured
     const cloudflareConfig = getCloudflareConfig();
     if (!cloudflareConfig) {
@@ -62,7 +108,9 @@ async function processImageFiles(dataTransfer: vscode.DataTransfer): Promise<str
                 fs.unlinkSync(tempFile);
 
                 if (imageUrl) {
-                    uploadedUrls.push(`![${file.name}](${imageUrl})`);
+                    // Format the URL based on the document's language
+                    const formattedUrl = formatImageUrl(imageUrl, file.name, document.languageId);
+                    uploadedUrls.push(formattedUrl);
                 }
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to upload ${file.name}: ${error}`);
@@ -92,7 +140,7 @@ class ImageDropProvider implements vscode.DocumentDropEditProvider {
         dataTransfer: vscode.DataTransfer,
         token: vscode.CancellationToken
     ): Promise<vscode.DocumentDropEdit | undefined> {
-        const urls = await processImageFiles(dataTransfer);
+        const urls = await processImageFiles(dataTransfer, document);
         
         if (!urls) {
             return undefined;
@@ -112,7 +160,7 @@ class ImagePasteProvider implements vscode.DocumentPasteEditProvider {
         context: vscode.DocumentPasteEditContext,
         token: vscode.CancellationToken
     ): Promise<vscode.DocumentPasteEdit[] | undefined> {
-        const urls = await processImageFiles(dataTransfer);
+        const urls = await processImageFiles(dataTransfer, document);
         
         if (!urls) {
             return undefined;
