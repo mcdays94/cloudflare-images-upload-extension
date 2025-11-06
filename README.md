@@ -17,6 +17,8 @@
   - **Plain Text**: Raw URL
 - **⚡ Progress Notifications**: Real-time upload progress feedback
 - **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
+- **🏷️ Automatic Metadata Tagging**: Tags uploaded images with extension info for easy tracking and management
+- **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (disabled by default)
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
 > 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
@@ -190,6 +192,13 @@ If you find this extension helpful and it saves you time, consider buying me a c
 - **Discussions**: [GitHub Discussions](https://github.com/mcdays94/cloudflare-images-upload-extension/discussions)
 
 ## 📊 Release Notes
+
+### 0.4.0
+
+- ✅ **Automatic Metadata Tagging**: Uploaded images are tagged with extension info (version, filename, timestamp) for easy tracking
+- ✅ **Optional Delete on Removal**: Ask to delete images from Cloudflare when removing URLs (disabled by default)
+- ✅ **Smart Tracking**: Tracks recently inserted images for 5 minutes to detect removals
+- ✅ **Configurable**: Both features can be enabled/disabled in settings
 
 ### 0.3.0
 

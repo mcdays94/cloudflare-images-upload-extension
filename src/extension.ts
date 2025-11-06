@@ -23,9 +23,20 @@ interface ImageCache {
     [hash: string]: ImageCacheEntry;
 }
 
+interface TrackedImage {
+    imageId: string;
+    url: string;
+    documentUri: string;
+    insertedAt: number;
+}
+
 // Global state for image cache
 let imageCache: ImageCache = {};
 let globalState: vscode.Memento | undefined;
+
+// Track recently inserted images for deletion detection
+const recentlyInsertedImages: Map<string, TrackedImage> = new Map();
+const TRACKING_DURATION = 5 * 60 * 1000; // Track for 5 minutes after insertion
 
 // Calculate SHA-256 hash of a file buffer
 function calculateFileHash(buffer: Buffer): string {
@@ -76,6 +87,59 @@ async function cleanupOldCacheEntries(): Promise<void> {
     
     if (hasChanges) {
         await saveImageCache();
+    }
+}
+
+// Extract image ID from Cloudflare URL
+function extractImageIdFromUrl(url: string): string | null {
+    // Format: https://imagedelivery.net/{accountHash}/{imageId}/{variant}
+    const match = url.match(/imagedelivery\.net\/[^\/]+\/([^\/]+)/);
+    return match ? match[1] : null;
+}
+
+// Track an inserted image URL
+function trackInsertedImage(url: string, documentUri: string): void {
+    const imageId = extractImageIdFromUrl(url);
+    if (!imageId) {
+        return;
+    }
+    
+    recentlyInsertedImages.set(url, {
+        imageId,
+        url,
+        documentUri,
+        insertedAt: Date.now()
+    });
+    
+    // Auto-cleanup after tracking duration
+    setTimeout(() => {
+        recentlyInsertedImages.delete(url);
+    }, TRACKING_DURATION);
+}
+
+// Delete image from Cloudflare
+async function deleteImageFromCloudflare(imageId: string, config: CloudflareConfig): Promise<boolean> {
+    try {
+        const response = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/images/v1/${imageId}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${config.apiToken}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error(`Failed to delete image: ${error}`);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error(`Error deleting image: ${error}`);
+        return false;
     }
 }
 
@@ -192,6 +256,9 @@ async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vs
                     // Format the URL based on the document's language
                     const formattedUrl = formatImageUrl(imageUrl, file.name, document.languageId);
                     uploadedUrls.push(formattedUrl);
+                    
+                    // Track this URL for potential deletion
+                    trackInsertedImage(imageUrl, document.uri.toString());
                 }
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to upload ${file.name}: ${error}`);
@@ -323,6 +390,10 @@ export async function activate(context: vscode.ExtensionContext) {
                     editor.edit(editBuilder => {
                         editBuilder.insert(editor.selection.active, markdown);
                     });
+                    
+                    // Track this URL for potential deletion
+                    trackInsertedImage(imageUrl, editor.document.uri.toString());
+                    
                     vscode.window.showInformationMessage('Image uploaded successfully!');
                 }
             }
@@ -454,7 +525,66 @@ export async function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    context.subscriptions.push(disposable, setupDisposable, ...dropProviders, ...pasteProviders);
+    // Register deletion detection listener (if enabled in settings)
+    const deletionListener = vscode.workspace.onDidChangeTextDocument(async (event) => {
+        const config = vscode.workspace.getConfiguration('cloudflareImagesUpload');
+        const deleteOnRemoval = config.get<boolean>('deleteOnRemoval', false);
+        
+        if (!deleteOnRemoval || !event.contentChanges.length) {
+            return;
+        }
+
+        // Check if text was deleted
+        for (const change of event.contentChanges) {
+            if (change.text === '' && change.rangeLength > 0) {
+                // Text was deleted - check which tracked URLs are no longer in the document
+                const currentDocumentText = event.document.getText();
+                const documentUri = event.document.uri.toString();
+                
+                // Check all tracked images for this document
+                for (const [url, trackedImage] of recentlyInsertedImages.entries()) {
+                    if (trackedImage.documentUri === documentUri && !currentDocumentText.includes(url)) {
+                        // This URL was in the document but is no longer present
+                        const cloudflareConfig = getCloudflareConfig();
+                        if (!cloudflareConfig) {
+                            recentlyInsertedImages.delete(url);
+                            continue;
+                        }
+
+                        // Show confirmation dialog
+                        const choice = await vscode.window.showWarningMessage(
+                            `Image URL removed. Delete from Cloudflare Images?`,
+                            'Delete',
+                            'Keep'
+                        );
+
+                        if (choice === 'Delete') {
+                            const success = await deleteImageFromCloudflare(trackedImage.imageId, cloudflareConfig);
+                            if (success) {
+                                vscode.window.showInformationMessage('Image deleted from Cloudflare Images');
+                                
+                                // Also remove from cache if present
+                                for (const hash in imageCache) {
+                                    if (imageCache[hash].url === url) {
+                                        delete imageCache[hash];
+                                        await saveImageCache();
+                                        break;
+                                    }
+                                }
+                            } else {
+                                vscode.window.showErrorMessage('Failed to delete image from Cloudflare');
+                            }
+                        }
+                        
+                        // Remove from tracking regardless of choice
+                        recentlyInsertedImages.delete(url);
+                    }
+                }
+            }
+        }
+    });
+
+    context.subscriptions.push(disposable, setupDisposable, ...dropProviders, ...pasteProviders, deletionListener);
 }
 
 function getCloudflareConfig(): CloudflareConfig | null {
@@ -486,6 +616,20 @@ async function uploadImageToCloudflare(
         const formData = new FormData();
         formData.append('file', fs.createReadStream(imagePath));
         formData.append('requireSignedURLs', 'false');
+
+        // Add metadata if enabled in settings
+        const vsConfig = vscode.workspace.getConfiguration('cloudflareImagesUpload');
+        const addMetadata = vsConfig.get<boolean>('addMetadata', true);
+        
+        if (addMetadata) {
+            const metadata = {
+                uploadedBy: 'vscode-cloudflare-images-extension',
+                version: '0.4.0',
+                uploadedAt: new Date().toISOString(),
+                fileName: fileName || path.basename(imagePath)
+            };
+            formData.append('metadata', JSON.stringify(metadata));
+        }
 
         const response = await fetch(
             `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/images/v1`,

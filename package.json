@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste - works in Markdown, HTML, CSS, JS, and more",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -62,6 +62,16 @@
           "type": "string",
           "default": "/public",
           "description": "Default variant to use for image URLs"
+        },
+        "cloudflareImagesUpload.deleteOnRemoval": {
+          "type": "boolean",
+          "default": false,
+          "description": "Ask to delete image from Cloudflare when URL is removed from document (disabled by default)"
+        },
+        "cloudflareImagesUpload.addMetadata": {
+          "type": "boolean",
+          "default": true,
+          "description": "Add metadata to uploaded images identifying them as uploaded by this extension"
         }
       }
     },
