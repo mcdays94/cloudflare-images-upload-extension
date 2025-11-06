@@ -20,6 +20,7 @@ DRAG-DROP-TESTING.md
 PASTE-TESTING.md
 PASTE-DRAGDROP-TESTING.md
 verify-setup.sh
+test-files/
 
 # Logs
 *.log
