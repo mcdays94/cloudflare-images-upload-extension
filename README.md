@@ -118,10 +118,26 @@ Before using the extension, you need to configure your Cloudflare credentials:
 
 ## 📝 Example Output
 
-When you upload an image, the extension automatically inserts a markdown link:
+The extension automatically inserts the correct syntax based on your file type. Here are some examples:
 
+**Markdown (.md):**
 ```markdown
 ![image-name.png](https://imagedelivery.net/YOUR_HASH/IMAGE_ID/public)
+```
+
+**HTML (.html):**
+```html
+<img src="https://imagedelivery.net/YOUR_HASH/IMAGE_ID/public" alt="image-name.png" />
+```
+
+**CSS (.css):**
+```css
+url('https://imagedelivery.net/YOUR_HASH/IMAGE_ID/public')
+```
+
+**JavaScript/TypeScript:**
+```javascript
+"https://imagedelivery.net/YOUR_HASH/IMAGE_ID/public"
 ```
 
 The image is immediately accessible via Cloudflare's global CDN!
