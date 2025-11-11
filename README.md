@@ -23,6 +23,31 @@
 
 > 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
 
+## 🎬 Features in Action
+
+### Drag & Drop Upload
+![Drag and Drop](media/DragandDrop_Export.gif)
+
+### Copy & Paste Upload
+![Copy and Paste](media/CopyandPaste_Export.gif)
+
+### Smart Duplicate Detection
+![Duplicate Detection](media/DuplicateDetection_Export_smaller.gif)
+
+### Delete on Removal (Optional)
+![Delete Function](media/Delete_Export.gif)
+
+### Automatic Metadata Tagging
+All uploaded images are automatically tagged with metadata for easy tracking:
+
+![Metadata in Cloudflare Dashboard](media/Metadata_Screenshot.png)
+
+The metadata includes:
+- **uploadedBy**: Identifies images from this extension
+- **version**: Extension version used
+- **uploadedAt**: Timestamp of upload
+- **fileName**: Original filename
+
 ## 📦 Installation
 
 ### From Marketplace
