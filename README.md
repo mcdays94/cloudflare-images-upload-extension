@@ -2,7 +2,7 @@
 
 > Upload images to Cloudflare Images with drag & drop, paste, or command palette - automatically inserts the right syntax for your file type.
 
-## ✨ Features
+## Features
 
 - **🖱️ Drag & Drop**: Drag image files from your file explorer directly into any supported file
 - **📋 Paste from Clipboard**: Copy images from anywhere (screenshots, browsers, image editors) and paste into your document
@@ -21,9 +21,9 @@
 - **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (disabled by default)
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
-> 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and Claude Sonnet 4.5.
+> **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and Claude Sonnet 4.5.
 >
-> 📝 **Read the story**: [How I built this extension with the help of Claude](https://mdias.info/posts/vibecoding-vscode-extension-into-existence/) - A blog post about the development process and lessons learned.
+> **Read the story**: [How I built this extension with the help of Claude](https://mdias.info/posts/vibecoding-vscode-extension-into-existence/) - A blog post about the development process and lessons learned.
 
 ## 🎬 Features in Action
 
@@ -77,7 +77,7 @@ Or install directly from:
 3. Go to Extensions → `...` menu → Install from VSIX
 4. Select the downloaded file
 
-## ⚙️ Configuration
+## Configuration
 
 Before using the extension, you need to configure your Cloudflare credentials:
 
@@ -101,7 +101,7 @@ Before using the extension, you need to configure your Cloudflare credentials:
 5. Or create a custom token with `Account.Cloudflare Images:Edit` permission
 6. Copy the token and paste it in the extension settings
 
-## 🚀 Usage
+## Usage
 
 ### Method 1: Drag & Drop
 
@@ -128,7 +128,13 @@ Before using the extension, you need to configure your Cloudflare credentials:
 4. Select an image file
 5. ✨ Done! The image uploads and a markdown link is inserted
 
-## 📸 Supported Image Formats
+### Real world use-case
+
+I use it heavily when writing blog posts. Going from screenshot to published image in seconds.
+
+![ScreenshotWorkflow.gif](https://imagedelivery.net/LDaKen7vOKX42km4kZ-43A/07968c15-0596-4341-d0f8-d8c2fe04e600/blog)
+
+## Supported Image Formats
 
 - PNG (`.png`)
 - JPEG (`.jpg`, `.jpeg`)
@@ -137,13 +143,13 @@ Before using the extension, you need to configure your Cloudflare credentials:
 - BMP (`.bmp`)
 - SVG (`.svg`)
 
-## 🔧 Requirements
+## Requirements
 
 - **VSCode**: Version 1.80.0 or higher
 - **Cloudflare Account**: With Cloudflare Images enabled
 - **API Token**: With `Images:Edit` permission
 
-## 📝 Example Output
+## Example Output
 
 The extension automatically inserts the correct syntax based on your file type. Here are some examples:
 
@@ -169,7 +175,7 @@ url('https://imagedelivery.net/YOUR_HASH/IMAGE_ID/public')
 
 The image is immediately accessible via Cloudflare's global CDN!
 
-## 🎯 Use Cases
+## Use Cases
 
 - **Documentation**: Quickly add screenshots to your README files
 - **Blog Posts**: Upload images while writing markdown blog posts
@@ -177,7 +183,7 @@ The image is immediately accessible via Cloudflare's global CDN!
 - **Technical Writing**: Include diagrams and screenshots in technical docs
 - **GitHub Issues**: Upload images for bug reports
 
-## 🛠️ Development
+## Development
 
 ### Building from Source
 
@@ -209,7 +215,7 @@ cloudflare-images-upload/
 └── README.md            # This file
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -219,7 +225,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -228,11 +234,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you find this extension helpful and it saves you time, consider buying me a coffee! Your support helps keep this project maintained and improved.
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
-
-## 📮 Get Help
-
-- **Issues**: [GitHub Issues](https://github.com/mcdays94/cloudflare-images-upload-extension/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/mcdays94/cloudflare-images-upload-extension/discussions)
 
 ## 📊 Release Notes
 
@@ -265,8 +266,6 @@ If you find this extension helpful and it saves you time, consider buying me a c
 - ✅ Support for PNG, JPG, GIF, WebP, BMP, SVG
 
 ---
-
-Made with ❤️ by [Miguel Caetano Dias](https://github.com/mcdays94)
 
 ### Note
 
