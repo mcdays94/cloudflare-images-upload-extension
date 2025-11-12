@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste - works in Markdown, HTML, CSS, JS, and more",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
