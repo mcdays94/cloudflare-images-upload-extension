@@ -21,7 +21,9 @@
 - **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (disabled by default)
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
-> 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and AI assistance to accelerate development.
+> 🚀 **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and Claude Sonnet 4.5.
+>
+> 📝 **Read the story**: [How I built this extension with the help of Claude](https://mdias.info/posts/vibecoding-vscode-extension-into-existence/) - A blog post about the development process and lessons learned.
 
 ## 🎬 Features in Action
 
