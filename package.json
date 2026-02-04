@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste - works in Markdown, HTML, CSS, JS, and more",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -72,6 +72,21 @@
           "type": "boolean",
           "default": true,
           "description": "Add metadata to uploaded images identifying them as uploaded by this extension"
+        },
+        "cloudflareImagesUpload.useSignedUrls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate signed URLs to prevent unauthorized access to other variants (requires signing key)"
+        },
+        "cloudflareImagesUpload.signingKey": {
+          "type": "string",
+          "default": "",
+          "description": "(Optional) Manual signing key override. Leave empty to auto-fetch from Cloudflare API using your API token."
+        },
+        "cloudflareImagesUpload.signedUrlExpiration": {
+          "type": "number",
+          "default": 0,
+          "description": "Signed URL expiration time in seconds. Set to 0 for no expiration (default)."
         }
       }
     },

@@ -19,13 +19,10 @@
 - **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
 - **🏷️ Automatic Metadata Tagging**: Tags uploaded images with extension info for easy tracking and management
 - **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (disabled by default)
+- **🔐 Signed URLs**: Generate signed URLs to restrict access to specific variants, preventing unauthorized access to other image sizes
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
-> **Built with Windsurf**: This extension was developed using [Windsurf](https://codeium.com/windsurf) and Claude Sonnet 4.5.
->
-> **Read the story**: [How I built this extension with the help of Claude](https://mdias.info/posts/vibecoding-vscode-extension-into-existence/) - A blog post about the development process and lessons learned.
-
-## 🎬 Features in Action
+## Features in Action
 
 ### Drag & Drop Upload
 ![Drag and Drop](media/DragandDrop_Export.gif)
@@ -50,7 +47,7 @@ The metadata includes:
 - **uploadedAt**: Timestamp of upload
 - **fileName**: Original filename
 
-## 📦 Installation
+## Installation
 
 ### From Marketplace
 
@@ -91,6 +88,8 @@ Before using the extension, you need to configure your Cloudflare credentials:
 | **API Token** | API token with Images:Edit permission | Dashboard → My Profile → API Tokens → Create Token |
 | **Account Hash** | Your Cloudflare Images account hash | Dashboard → Images → Copy from URL: `/images/[HASH]` |
 | **Default Variant** | Image variant for URLs (optional) | Default: `/public` |
+| **Use Signed URLs** | Enable signed URLs for variant protection | Default: `false` |
+| **Signed URL Expiration** | Expiration time in seconds (0 = never) | Default: `0` |
 
 ### Getting Your API Token
 
@@ -229,13 +228,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## ☕ Support This Project
+## Support This Project
 
 If you find this extension helpful and it saves you time, consider buying me a coffee! Your support helps keep this project maintained and improved.
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
 
-## 📊 Release Notes
+## Release Notes
+
+### 0.5.0
+
+- **Signed URLs**: Generate signed URLs to prevent unauthorized access to other image variants
+- **Auto-fetch Signing Key**: Signing key is automatically retrieved from Cloudflare API
+- **Configurable Expiration**: Set URL expiration time or use non-expiring signed URLs
 
 ### 0.4.0
 

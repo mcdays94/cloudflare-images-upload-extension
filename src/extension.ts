@@ -10,6 +10,9 @@ interface CloudflareConfig {
     apiToken: string;
     accountHash: string;
     defaultVariant: string;
+    useSignedUrls: boolean;
+    signingKey: string;
+    signedUrlExpiration: number;
 }
 
 interface ImageCacheEntry {
@@ -33,6 +36,9 @@ interface TrackedImage {
 // Global state for image cache
 let imageCache: ImageCache = {};
 let globalState: vscode.Memento | undefined;
+
+// Cached signing key
+let cachedSigningKey: string | null = null;
 
 // Track recently inserted images for deletion detection
 const recentlyInsertedImages: Map<string, TrackedImage> = new Map();
@@ -88,6 +94,104 @@ async function cleanupOldCacheEntries(): Promise<void> {
     if (hasChanges) {
         await saveImageCache();
     }
+}
+
+// Fetch signing key from Cloudflare API
+async function fetchSigningKey(accountId: string, apiToken: string): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1/keys`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${apiToken}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error(`Failed to fetch signing keys: ${error}`);
+            return null;
+        }
+
+        const data = await response.json() as any;
+        if (data.success && data.result?.keys?.length > 0) {
+            // Return the first (default) signing key
+            return data.result.keys[0].value;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching signing key: ${error}`);
+        return null;
+    }
+}
+
+// Get signing key (from cache, settings, or API)
+async function getSigningKey(accountId: string, apiToken: string, manualKey?: string): Promise<string | null> {
+    // If user provided a manual key, use it
+    if (manualKey) {
+        return manualKey;
+    }
+    
+    // Check cache first
+    if (cachedSigningKey) {
+        return cachedSigningKey;
+    }
+    
+    // Check global state cache
+    if (globalState) {
+        const storedKey = globalState.get<string>('signingKey');
+        if (storedKey) {
+            cachedSigningKey = storedKey;
+            return storedKey;
+        }
+    }
+    
+    // Fetch from API
+    const key = await fetchSigningKey(accountId, apiToken);
+    if (key) {
+        cachedSigningKey = key;
+        // Store in global state for persistence
+        if (globalState) {
+            await globalState.update('signingKey', key);
+        }
+    }
+    return key;
+}
+
+// Generate a signed URL for Cloudflare Images
+function generateSignedUrl(imageId: string, variant: string, config: CloudflareConfig): string {
+    // URL path format: /<accountHash>/<imageId>/<variant>
+    const urlPath = `/${config.accountHash}/${imageId}${variant}`;
+    
+    // Calculate expiration timestamp (Unix time in seconds)
+    let expiry: number | null = null;
+    if (config.signedUrlExpiration > 0) {
+        expiry = Math.floor(Date.now() / 1000) + config.signedUrlExpiration;
+    }
+    
+    // Create the string to sign
+    // Format: <url_path>?exp=<expiry> (if expiry is set) or just <url_path>
+    let stringToSign = urlPath;
+    if (expiry !== null) {
+        stringToSign = `${urlPath}?exp=${expiry}`;
+    }
+    
+    // Generate HMAC-SHA256 signature
+    const hmac = crypto.createHmac('sha256', config.signingKey);
+    hmac.update(stringToSign);
+    const signature = hmac.digest('hex');
+    
+    // Construct the final signed URL
+    let signedUrl = `https://imagedelivery.net${urlPath}`;
+    if (expiry !== null) {
+        signedUrl += `?exp=${expiry}&sig=${signature}`;
+    } else {
+        signedUrl += `?sig=${signature}`;
+    }
+    
+    return signedUrl;
 }
 
 // Extract image ID from Cloudflare URL
@@ -192,7 +296,7 @@ function formatImageUrl(imageUrl: string, fileName: string, languageId: string):
 // Shared helper function for processing image files from DataTransfer
 async function processImageFiles(dataTransfer: vscode.DataTransfer, document: vscode.TextDocument): Promise<string[] | undefined> {
     // Check if Cloudflare is configured
-    const cloudflareConfig = getCloudflareConfig();
+    const cloudflareConfig = await getCloudflareConfig();
     if (!cloudflareConfig) {
         vscode.window.showErrorMessage('Please configure Cloudflare credentials in settings');
         return undefined;
@@ -351,7 +455,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         // Check if configuration is complete
-        const cloudflareConfig = getCloudflareConfig();
+        const cloudflareConfig = await getCloudflareConfig();
         if (!cloudflareConfig) {
             vscode.window.showErrorMessage('Please configure Cloudflare credentials in settings');
             return;
@@ -432,7 +536,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const change = event.contentChanges[0];
         if (change.text && change.text.startsWith('data:image/')) {
             try {
-                const cloudflareConfig = getCloudflareConfig();
+                const cloudflareConfig = await getCloudflareConfig();
                 if (!cloudflareConfig) {
                     vscode.window.showErrorMessage('Please configure Cloudflare credentials in settings');
                     return;
@@ -545,7 +649,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 for (const [url, trackedImage] of recentlyInsertedImages.entries()) {
                     if (trackedImage.documentUri === documentUri && !currentDocumentText.includes(url)) {
                         // This URL was in the document but is no longer present
-                        const cloudflareConfig = getCloudflareConfig();
+                        const cloudflareConfig = await getCloudflareConfig();
                         if (!cloudflareConfig) {
                             recentlyInsertedImages.delete(url);
                             continue;
@@ -587,12 +691,15 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable, setupDisposable, ...dropProviders, ...pasteProviders, deletionListener);
 }
 
-function getCloudflareConfig(): CloudflareConfig | null {
+function getCloudflareConfigSync(): { accountId: string; apiToken: string; accountHash: string; defaultVariant: string; useSignedUrls: boolean; manualSigningKey: string; signedUrlExpiration: number } | null {
     const config = vscode.workspace.getConfiguration('cloudflareImagesUpload');
     const accountId = config.get<string>('accountId');
     const apiToken = config.get<string>('apiToken');
     const accountHash = config.get<string>('accountHash');
     const defaultVariant = config.get<string>('defaultVariant') || '/public';
+    const useSignedUrls = config.get<boolean>('useSignedUrls', false);
+    const manualSigningKey = config.get<string>('signingKey', '');
+    const signedUrlExpiration = config.get<number>('signedUrlExpiration', 0);
 
     if (!accountId || !apiToken || !accountHash) {
         return null;
@@ -602,7 +709,59 @@ function getCloudflareConfig(): CloudflareConfig | null {
         accountId,
         apiToken,
         accountHash,
-        defaultVariant
+        defaultVariant,
+        useSignedUrls,
+        manualSigningKey,
+        signedUrlExpiration
+    };
+}
+
+async function getCloudflareConfig(): Promise<CloudflareConfig | null> {
+    const syncConfig = getCloudflareConfigSync();
+    if (!syncConfig) {
+        return null;
+    }
+
+    let signingKey = '';
+    if (syncConfig.useSignedUrls) {
+        // Automatically fetch signing key if not manually provided
+        const key = await getSigningKey(syncConfig.accountId, syncConfig.apiToken, syncConfig.manualSigningKey);
+        if (!key) {
+            vscode.window.showErrorMessage('Failed to retrieve signing key from Cloudflare. Please check your API token has Images Read permission, or manually add the signing key in settings.');
+            return null;
+        }
+        signingKey = key;
+    }
+
+    return {
+        accountId: syncConfig.accountId,
+        apiToken: syncConfig.apiToken,
+        accountHash: syncConfig.accountHash,
+        defaultVariant: syncConfig.defaultVariant,
+        useSignedUrls: syncConfig.useSignedUrls,
+        signingKey,
+        signedUrlExpiration: syncConfig.signedUrlExpiration
+    };
+}
+
+// Legacy sync version for places that can't be async
+function getCloudflareConfigLegacy(): CloudflareConfig | null {
+    const syncConfig = getCloudflareConfigSync();
+    if (!syncConfig) {
+        return null;
+    }
+
+    // For legacy sync calls, use cached key or manual key
+    let signingKey = syncConfig.manualSigningKey || cachedSigningKey || '';
+
+    return {
+        accountId: syncConfig.accountId,
+        apiToken: syncConfig.apiToken,
+        accountHash: syncConfig.accountHash,
+        defaultVariant: syncConfig.defaultVariant,
+        useSignedUrls: syncConfig.useSignedUrls,
+        signingKey,
+        signedUrlExpiration: syncConfig.signedUrlExpiration
     };
 }
 
@@ -615,7 +774,7 @@ async function uploadImageToCloudflare(
     try {
         const formData = new FormData();
         formData.append('file', fs.createReadStream(imagePath));
-        formData.append('requireSignedURLs', 'false');
+        formData.append('requireSignedURLs', config.useSignedUrls ? 'true' : 'false');
 
         // Add metadata if enabled in settings
         const vsConfig = vscode.workspace.getConfiguration('cloudflareImagesUpload');
@@ -651,8 +810,13 @@ async function uploadImageToCloudflare(
         const data = await response.json() as any;
         const imageId = data.result.id;
         
-        // Construct the public URL
-        const imageUrl = `https://imagedelivery.net/${config.accountHash}/${imageId}${config.defaultVariant}`;
+        // Construct the URL (signed or public)
+        let imageUrl: string;
+        if (config.useSignedUrls) {
+            imageUrl = generateSignedUrl(imageId, config.defaultVariant, config);
+        } else {
+            imageUrl = `https://imagedelivery.net/${config.accountHash}/${imageId}${config.defaultVariant}`;
+        }
         
         // Store in cache if hash and fileName are provided
         if (fileHash && fileName) {
