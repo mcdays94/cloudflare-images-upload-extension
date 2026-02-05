@@ -925,9 +925,11 @@ async function uploadImageToCloudflare(
         const addMetadata = vsConfig.get<boolean>('addMetadata', true);
         
         if (addMetadata) {
+            // Get version from package.json dynamically
+            const extensionVersion = vscode.extensions.getExtension('miguelcaetanodias.cloudflare-images-upload')?.packageJSON?.version || 'unknown';
             const metadata = {
                 uploadedBy: 'vscode-cloudflare-images-extension',
-                version: '0.4.0',
+                version: extensionVersion,
                 uploadedAt: new Date().toISOString(),
                 fileName: fileName || path.basename(imagePath)
             };
