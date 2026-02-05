@@ -17,6 +17,7 @@
   - **Plain Text**: Raw URL
 - **⚡ Progress Notifications**: Real-time upload progress feedback
 - **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
+- **📦 Automatic Compression**: Compress oversized images before upload with configurable quality and size limits
 - **🏷️ Automatic Metadata Tagging**: Tags uploaded images with extension info for easy tracking and management
 - **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (with optional auto-delete)
 - **🔐 Signed URLs**: Generate signed URLs to restrict access to specific variants, preventing unauthorized access to other image sizes
@@ -274,6 +275,14 @@ If you find this extension helpful and it saves you time, consider buying me a c
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
 
 ## Release Notes
+
+### 0.6.0
+
+- **Image Compression**: Automatically compress images exceeding configurable size limit before upload
+- **Preserve PNG Format**: Option to keep PNG format instead of converting to JPEG during compression
+- **Delete Without Confirmation**: Option to auto-delete images without confirmation dialog
+- **HEIC/HEIF Registration**: Explicit mime type registration for better drag/drop and paste support
+- **Settings Organization**: Settings now grouped logically in the UI
 
 ### 0.5.0
 
