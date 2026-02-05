@@ -24,6 +24,7 @@ test-files/
 
 # Release notes (kept in GitHub releases only)
 RELEASE_NOTES_*.md
+!RELEASE_NOTES*.md
 
 # Logs
 *.log

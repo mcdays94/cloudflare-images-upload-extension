@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as os from 'os';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
+import sharp from 'sharp';
 
 interface CloudflareConfig {
     accountId: string;
@@ -13,6 +15,13 @@ interface CloudflareConfig {
     useSignedUrls: boolean;
     signingKey: string;
     signedUrlExpiration: number;
+}
+
+interface CompressionConfig {
+    enableCompression: boolean;
+    maxFileSizeMB: number;
+    compressionQuality: number;
+    preservePngFormat: boolean;
 }
 
 interface ImageCacheEntry {
@@ -93,6 +102,113 @@ async function cleanupOldCacheEntries(): Promise<void> {
     
     if (hasChanges) {
         await saveImageCache();
+    }
+}
+
+// Get compression config from settings
+function getCompressionConfig(): CompressionConfig {
+    const config = vscode.workspace.getConfiguration('cloudflareImagesUpload');
+    return {
+        enableCompression: config.get<boolean>('enableCompression', true),
+        maxFileSizeMB: config.get<number>('maxFileSizeMB', 10),
+        compressionQuality: config.get<number>('compressionQuality', 80),
+        preservePngFormat: config.get<boolean>('preservePNGFormat', false)
+    };
+}
+
+// Compress image if it exceeds the max file size
+async function compressImageIfNeeded(
+    imagePath: string,
+    compressionConfig: CompressionConfig
+): Promise<{ path: string; wasCompressed: boolean; originalSize: number; newSize: number }> {
+    const stats = fs.statSync(imagePath);
+    const fileSizeMB = stats.size / (1024 * 1024);
+    const originalSize = stats.size;
+
+    // If compression is disabled or file is under the limit, return original
+    if (!compressionConfig.enableCompression || fileSizeMB <= compressionConfig.maxFileSizeMB) {
+        return { path: imagePath, wasCompressed: false, originalSize, newSize: originalSize };
+    }
+
+    const ext = path.extname(imagePath).toLowerCase();
+    
+    // Skip compression for SVG and GIF (animated) - these don't compress well with sharp
+    if (ext === '.svg' || ext === '.gif') {
+        return { path: imagePath, wasCompressed: false, originalSize, newSize: originalSize };
+    }
+
+    try {
+        const tempDir = os.tmpdir();
+        // Determine output extension based on format and settings
+        let outputExt = ext;
+        if (ext === '.png' && !compressionConfig.preservePngFormat) {
+            outputExt = '.jpg';
+        } else if (ext === '.heic' || ext === '.heif' || ext === '.bmp') {
+            outputExt = '.jpg';
+        }
+        const tempFileName = `cf-compressed-${Date.now()}${outputExt}`;
+        const tempPath = path.join(tempDir, tempFileName);
+
+        let quality = compressionConfig.compressionQuality;
+        let compressedBuffer: Buffer;
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        // Progressively reduce quality until under the limit
+        do {
+            const sharpInstance = sharp(imagePath);
+            
+            if (ext === '.png' && compressionConfig.preservePngFormat) {
+                // Keep PNG format with compression
+                compressedBuffer = await sharpInstance
+                    .png({ compressionLevel: 9, palette: true })
+                    .toBuffer();
+            } else if (ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.heic' || ext === '.heif' || ext === '.bmp') {
+                // Convert to JPEG for better compression
+                compressedBuffer = await sharpInstance
+                    .jpeg({ quality, mozjpeg: true })
+                    .toBuffer();
+            } else if (ext === '.webp') {
+                compressedBuffer = await sharpInstance
+                    .webp({ quality })
+                    .toBuffer();
+            } else {
+                // For other formats, try JPEG
+                compressedBuffer = await sharpInstance
+                    .jpeg({ quality, mozjpeg: true })
+                    .toBuffer();
+            }
+
+            const compressedSizeMB = compressedBuffer.length / (1024 * 1024);
+            
+            if (compressedSizeMB <= compressionConfig.maxFileSizeMB) {
+                fs.writeFileSync(tempPath, compressedBuffer);
+                return { 
+                    path: tempPath, 
+                    wasCompressed: true, 
+                    originalSize, 
+                    newSize: compressedBuffer.length 
+                };
+            }
+
+            // Reduce quality for next attempt
+            quality = Math.max(10, quality - 15);
+            attempts++;
+        } while (attempts < maxAttempts);
+
+        // If still too large after max attempts, return the last compressed version
+        fs.writeFileSync(tempPath, compressedBuffer!);
+        return { 
+            path: tempPath, 
+            wasCompressed: true, 
+            originalSize, 
+            newSize: compressedBuffer!.length 
+        };
+
+    } catch (error) {
+        console.error('Compression failed:', error);
+        // Return original if compression fails
+        return { path: imagePath, wasCompressed: false, originalSize, newSize: originalSize };
     }
 }
 
@@ -467,7 +583,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 canSelectMany: false,
                 openLabel: 'Upload',
                 filters: {
-                    'Images': ['png', 'jpg', 'jpeg', 'gif', 'webp']
+                    'Images': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif']
                 }
             });
 
@@ -655,14 +771,24 @@ export async function activate(context: vscode.ExtensionContext) {
                             continue;
                         }
 
-                        // Show confirmation dialog
-                        const choice = await vscode.window.showWarningMessage(
-                            `Image URL removed. Delete from Cloudflare Images?`,
-                            'Delete',
-                            'Keep'
-                        );
+                        // Check if we should skip confirmation
+                        const deleteWithoutConfirmation = vscode.workspace.getConfiguration('cloudflareImagesUpload').get<boolean>('deleteWithoutConfirmation', false);
+                        
+                        let shouldDelete = false;
+                        if (deleteWithoutConfirmation) {
+                            // Skip confirmation, delete automatically
+                            shouldDelete = true;
+                        } else {
+                            // Show confirmation dialog
+                            const choice = await vscode.window.showWarningMessage(
+                                `Image URL removed. Delete from Cloudflare Images?`,
+                                'Delete',
+                                'Keep'
+                            );
+                            shouldDelete = choice === 'Delete';
+                        }
 
-                        if (choice === 'Delete') {
+                        if (shouldDelete) {
                             const success = await deleteImageFromCloudflare(trackedImage.imageId, cloudflareConfig);
                             if (success) {
                                 vscode.window.showInformationMessage('Image deleted from Cloudflare Images');
@@ -771,9 +897,27 @@ async function uploadImageToCloudflare(
     fileHash?: string, 
     fileName?: string
 ): Promise<string | null> {
+    let tempCompressedPath: string | null = null;
+    
     try {
+        // Check if compression is needed
+        const compressionConfig = getCompressionConfig();
+        const compressionResult = await compressImageIfNeeded(imagePath, compressionConfig);
+        
+        const uploadPath = compressionResult.path;
+        tempCompressedPath = compressionResult.wasCompressed ? compressionResult.path : null;
+        
+        // Show compression notification if image was compressed
+        if (compressionResult.wasCompressed) {
+            const originalMB = (compressionResult.originalSize / (1024 * 1024)).toFixed(2);
+            const newMB = (compressionResult.newSize / (1024 * 1024)).toFixed(2);
+            vscode.window.showInformationMessage(
+                `Image compressed: ${originalMB} MB → ${newMB} MB`
+            );
+        }
+        
         const formData = new FormData();
-        formData.append('file', fs.createReadStream(imagePath));
+        formData.append('file', fs.createReadStream(uploadPath));
         formData.append('requireSignedURLs', config.useSignedUrls ? 'true' : 'false');
 
         // Add metadata if enabled in settings
@@ -823,8 +967,25 @@ async function uploadImageToCloudflare(
             await addImageToCache(fileHash, imageUrl, fileName);
         }
         
+        // Clean up temp compressed file
+        if (tempCompressedPath) {
+            try {
+                fs.unlinkSync(tempCompressedPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+        
         return imageUrl;
     } catch (error) {
+        // Clean up temp compressed file on error
+        if (tempCompressedPath) {
+            try {
+                fs.unlinkSync(tempCompressedPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
         vscode.window.showErrorMessage(`Upload failed: ${error}`);
         return null;
     }

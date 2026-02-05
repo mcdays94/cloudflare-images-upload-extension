@@ -18,7 +18,7 @@
 - **⚡ Progress Notifications**: Real-time upload progress feedback
 - **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
 - **🏷️ Automatic Metadata Tagging**: Tags uploaded images with extension info for easy tracking and management
-- **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (disabled by default)
+- **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (with optional auto-delete)
 - **🔐 Signed URLs**: Generate signed URLs to restrict access to specific variants, preventing unauthorized access to other image sizes
 - **🌐 Multi-Format Support**: Works in 25+ file types including Markdown, HTML, CSS, JavaScript, TypeScript, Python, and more
 
@@ -88,8 +88,47 @@ Before using the extension, you need to configure your Cloudflare credentials:
 | **API Token** | API token with Images:Edit permission | Dashboard → My Profile → API Tokens → Create Token |
 | **Account Hash** | Your Cloudflare Images account hash | Dashboard → Images → Copy from URL: `/images/[HASH]` |
 | **Default Variant** | Image variant for URLs (optional) | Default: `/public` |
-| **Use Signed URLs** | Enable signed URLs for variant protection | Default: `false` |
-| **Signed URL Expiration** | Expiration time in seconds (0 = never) | Default: `0` |
+
+### Compression Settings
+
+The extension automatically compresses images that exceed the configured file size limit before uploading.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Enable Compression** | `true` | Automatically compress oversized images |
+| **Max File Size MB** | `10` | Compression triggers when file exceeds this size |
+| **Compression Quality** | `80` | Quality level (1-100) for compressed output |
+| **Preserve PNG Format** | `false` | When compressing PNG images, keep PNG format instead of converting to JPEG |
+
+**Supported formats and output:**
+
+| Input Format | Compressed Output | Notes |
+|--------------|-------------------|-------|
+| JPEG | JPEG | Quality reduced per settings |
+| PNG | JPEG or PNG | Converts to JPEG by default; enable "Preserve PNG Format" to keep PNG |
+| WebP | WebP | Quality reduced, format preserved |
+| HEIC/HEIF | JPEG | iPhone photos converted |
+| BMP | JPEG | Converted for better compression |
+| GIF | *(skipped)* | Animated format - not compressed |
+| SVG | *(skipped)* | Vector format - not compressed |
+
+> **Note:** Cloudflare's official upload limit is 10MB, though uploads up to 20MB may work but are not guaranteed. See [Cloudflare Images documentation](https://developers.cloudflare.com/images/upload-images/).
+
+### Signed URL Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Use Signed URLs** | `false` | Enable signed URLs for variant protection |
+| **Signed URL Expiration** | `0` | Expiration time in seconds (0 = never) |
+| **Signing Key** | *(auto-fetched)* | Optional manual override |
+
+### Other Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Delete On Removal** | `false` | Ask to delete image from Cloudflare when URL is removed from document |
+| **Delete Without Confirmation** | `false` | Skip confirmation dialog when deleting (auto-delete) |
+| **Add Metadata** | `true` | Tag uploaded images with extension info for tracking |
 
 ### Getting Your API Token
 

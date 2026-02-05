@@ -44,49 +44,90 @@
       "title": "Cloudflare Images Upload",
       "properties": {
         "cloudflareImagesUpload.accountId": {
+          "order": 1,
           "type": "string",
           "default": "",
           "description": "Your Cloudflare Account ID"
         },
         "cloudflareImagesUpload.apiToken": {
+          "order": 2,
           "type": "string",
           "default": "",
           "description": "Your Cloudflare API Token with Images:Edit permission"
         },
         "cloudflareImagesUpload.accountHash": {
+          "order": 3,
           "type": "string",
           "default": "",
           "description": "Your Cloudflare Account Hash (found in the Images dashboard URL)"
         },
         "cloudflareImagesUpload.defaultVariant": {
+          "order": 4,
           "type": "string",
           "default": "/public",
           "description": "Default variant to use for image URLs"
         },
         "cloudflareImagesUpload.deleteOnRemoval": {
+          "order": 30,
           "type": "boolean",
           "default": false,
           "description": "Ask to delete image from Cloudflare when URL is removed from document (disabled by default)"
         },
+        "cloudflareImagesUpload.deleteWithoutConfirmation": {
+          "order": 31,
+          "type": "boolean",
+          "default": false,
+          "description": "Skip the confirmation dialog when deleting images on removal. Only applies when 'Delete On Removal' is enabled."
+        },
         "cloudflareImagesUpload.addMetadata": {
+          "order": 32,
           "type": "boolean",
           "default": true,
           "description": "Add metadata to uploaded images identifying them as uploaded by this extension"
         },
         "cloudflareImagesUpload.useSignedUrls": {
+          "order": 20,
           "type": "boolean",
           "default": false,
           "description": "Generate signed URLs to prevent unauthorized access to other variants (requires signing key)"
         },
         "cloudflareImagesUpload.signingKey": {
+          "order": 21,
           "type": "string",
           "default": "",
           "description": "(Optional) Manual signing key override. Leave empty to auto-fetch from Cloudflare API using your API token."
         },
         "cloudflareImagesUpload.signedUrlExpiration": {
+          "order": 22,
           "type": "number",
           "default": 0,
           "description": "Signed URL expiration time in seconds. Set to 0 for no expiration (default)."
+        },
+        "cloudflareImagesUpload.enableCompression": {
+          "order": 10,
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically compress images that exceed the max file size before uploading. Supported: JPEG, PNG, WebP, HEIC/HEIF, BMP. PNG/HEIC/BMP are converted to JPEG. GIF and SVG are skipped."
+        },
+        "cloudflareImagesUpload.maxFileSizeMB": {
+          "order": 11,
+          "type": "number",
+          "default": 10,
+          "description": "Maximum file size in MB before compression is triggered. Note: Cloudflare's official limit is 10MB, though uploads up to 20MB may work but are not guaranteed. See https://developers.cloudflare.com/images/upload-images/"
+        },
+        "cloudflareImagesUpload.compressionQuality": {
+          "order": 12,
+          "type": "number",
+          "default": 80,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Compression quality (1-100). Lower values = smaller files but reduced quality. Applies to JPEG output and WebP."
+        },
+        "cloudflareImagesUpload.preservePNGFormat": {
+          "order": 13,
+          "type": "boolean",
+          "default": false,
+          "description": "When compressing PNG images, keep the PNG format instead of converting to JPEG. PNG compression is lossless but may result in larger files."
         }
       }
     },
@@ -189,7 +230,9 @@
           "image/gif",
           "image/webp",
           "image/bmp",
-          "image/svg+xml"
+          "image/svg+xml",
+          "image/heic",
+          "image/heif"
         ]
       }
     ],
@@ -282,7 +325,9 @@
           "image/gif",
           "image/webp",
           "image/bmp",
-          "image/svg+xml"
+          "image/svg+xml",
+          "image/heic",
+          "image/heif"
         ]
       }
     ]
@@ -295,12 +340,14 @@
   },
   "dependencies": {
     "form-data": "^4.0.0",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/form-data": "^2.2.1",
     "@types/node": "^16.11.7",
     "@types/node-fetch": "^2.6.13",
+    "@types/sharp": "^0.31.1",
     "@types/vscode": "^1.80.0",
     "typescript": "^4.5.5",
     "vsce": "^2.6.7"
