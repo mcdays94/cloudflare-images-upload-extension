@@ -738,7 +738,9 @@ export async function activate(context: vscode.ExtensionContext) {
                     'image/gif',
                     'image/webp',
                     'image/bmp',
-                    'image/svg+xml'
+                    'image/svg+xml',
+                    'image/heic',
+                    'image/heif'
                 ],
                 providedPasteEditKinds: []
             }

@@ -47,7 +47,7 @@ The metadata includes:
 - **version**: Extension version used
 - **uploadedAt**: Timestamp of upload
 - **fileName**: Original filename
-
+double
 ## Installation
 
 ### From Marketplace
@@ -275,6 +275,10 @@ If you find this extension helpful and it saves you time, consider buying me a c
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
 
 ## Release Notes
+
+### 0.6.1
+
+- **Fix**: HEIC/HEIF paste support now works correctly (was only working for drag & drop)
 
 ### 0.6.0
 
