@@ -2,7 +2,7 @@
   "name": "cloudflare-images-upload",
   "displayName": "Cloudflare Images Upload",
   "description": "Upload images to Cloudflare Images with drag & drop or paste - works in Markdown, HTML, CSS, JS, and more",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "publisher": "miguelcaetanodias",
   "icon": "extension_icon.png",
   "author": {
@@ -83,7 +83,18 @@
           "order": 32,
           "type": "boolean",
           "default": true,
-          "description": "Add metadata to uploaded images identifying them as uploaded by this extension"
+          "description": "Attach metadata to uploaded images. The default metadata includes extension name, version, upload time, and file name. Customize the template below to add your own fields."
+        },
+        "cloudflareImagesUpload.metadataTemplate": {
+          "order": 33,
+          "type": "object",
+          "default": {
+            "uploadedBy": "vscode-cloudflare-images-extension",
+            "version": "${extensionVersion}",
+            "uploadedAt": "${timestamp}",
+            "fileName": "${fileName}"
+          },
+          "markdownDescription": "Metadata key-value pairs attached to each upload. **By default**, images are tagged with the extension name, version, upload time, and file name.\n\nTo customize, click `Edit in settings.json` and modify the keys/values. You can add your own fields or remove existing ones.\n\n**Supported dynamic variables:**\n- `${fileName}` — Original file name\n- `${timestamp}` — ISO 8601 upload time\n- `${date}` — Date only (YYYY-MM-DD)\n- `${time}` — Time only (HH:MM:SS)\n- `${extensionVersion}` — Extension version\n- `${fileSize}` — File size in bytes\n- `${fileExtension}` — File extension (e.g. `.png`)\n- `${workspaceName}` — Current workspace name\n\n⚠️ Cloudflare limits metadata to 1024 bytes total."
         },
         "cloudflareImagesUpload.useSignedUrls": {
           "order": 20,
@@ -128,6 +139,19 @@
           "type": "boolean",
           "default": false,
           "description": "When compressing PNG images, keep the PNG format instead of converting to JPEG. PNG compression is lossless but may result in larger files."
+        },
+        "cloudflareImagesUpload.AVIFConversionFormat": {
+          "order": 14,
+          "type": "string",
+          "default": "webp",
+          "enum": ["webp", "jpeg", "png"],
+          "enumItemLabels": ["WebP (Recommended)", "JPEG", "PNG"],
+          "markdownEnumDescriptions": [
+            "**Best balance of quality and size.** Modern format with excellent compression. Supports transparency. ~30% smaller than JPEG at similar quality.",
+            "**Widest compatibility, smallest files.** Lossy compression — transcoding from AVIF will compound quality loss. No transparency support.",
+            "**Lossless, no quality loss.** Files will be significantly larger (5-10x vs JPEG). Best if your AVIF source was lossless."
+          ],
+          "markdownDescription": "Format to convert AVIF images to before uploading. Cloudflare Images does not accept AVIF as input, so AVIF files are automatically converted."
         }
       }
     },
@@ -232,7 +256,8 @@
           "image/bmp",
           "image/svg+xml",
           "image/heic",
-          "image/heif"
+          "image/heif",
+          "image/avif"
         ]
       }
     ],
@@ -327,7 +352,8 @@
           "image/bmp",
           "image/svg+xml",
           "image/heic",
-          "image/heif"
+          "image/heif",
+          "image/avif"
         ]
       }
     ]

@@ -116,6 +116,77 @@ function getCompressionConfig(): CompressionConfig {
     };
 }
 
+// Convert AVIF to a Cloudflare-compatible format (CF Images doesn't accept AVIF input)
+async function convertAvifIfNeeded(
+    imagePath: string
+): Promise<{ path: string; wasConverted: boolean }> {
+    const ext = path.extname(imagePath).toLowerCase();
+    if (ext !== '.avif') {
+        return { path: imagePath, wasConverted: false };
+    }
+
+    try {
+        const config = vscode.workspace.getConfiguration('cloudflareImagesUpload');
+        const format = config.get<string>('AVIFConversionFormat', 'webp');
+
+        const tempDir = os.tmpdir();
+        const outputExt = format === 'jpeg' ? '.jpg' : format === 'png' ? '.png' : '.webp';
+        const tempFileName = `cf-avif-converted-${Date.now()}${outputExt}`;
+        const tempPath = path.join(tempDir, tempFileName);
+
+        const sharpInstance = sharp(imagePath);
+        let buffer: Buffer;
+
+        if (format === 'png') {
+            buffer = await sharpInstance.png().toBuffer();
+        } else if (format === 'jpeg') {
+            const compressionConfig = getCompressionConfig();
+            buffer = await sharpInstance.jpeg({ quality: compressionConfig.compressionQuality, mozjpeg: true }).toBuffer();
+        } else {
+            const compressionConfig = getCompressionConfig();
+            buffer = await sharpInstance.webp({ quality: compressionConfig.compressionQuality }).toBuffer();
+        }
+
+        fs.writeFileSync(tempPath, buffer);
+        return { path: tempPath, wasConverted: true };
+    } catch (error) {
+        console.error('AVIF conversion failed:', error);
+        return { path: imagePath, wasConverted: false };
+    }
+}
+
+// Resolve metadata template by replacing dynamic variables with actual values
+function resolveMetadataTemplate(
+    template: Record<string, string>,
+    context: { fileName: string; filePath: string; fileSize: number }
+): Record<string, string> {
+    const now = new Date();
+    const extensionVersion = vscode.extensions.getExtension('miguelcaetanodias.cloudflare-images-upload')?.packageJSON?.version || 'unknown';
+    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name || 'unknown';
+
+    const variables: Record<string, string> = {
+        '${fileName}': context.fileName,
+        '${timestamp}': now.toISOString(),
+        '${date}': now.toISOString().split('T')[0],
+        '${time}': now.toTimeString().split(' ')[0],
+        '${extensionVersion}': extensionVersion,
+        '${fileSize}': String(context.fileSize),
+        '${fileExtension}': path.extname(context.fileName),
+        '${workspaceName}': workspaceName
+    };
+
+    const resolved: Record<string, string> = {};
+    for (const [key, value] of Object.entries(template)) {
+        let resolvedValue = String(value);
+        for (const [varName, varValue] of Object.entries(variables)) {
+            resolvedValue = resolvedValue.replace(varName, varValue);
+        }
+        resolved[key] = resolvedValue;
+    }
+
+    return resolved;
+}
+
 // Compress image if it exceeds the max file size
 async function compressImageIfNeeded(
     imagePath: string,
@@ -583,7 +654,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 canSelectMany: false,
                 openLabel: 'Upload',
                 filters: {
-                    'Images': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif']
+                    'Images': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'heif', 'avif']
                 }
             });
 
@@ -740,7 +811,8 @@ export async function activate(context: vscode.ExtensionContext) {
                     'image/bmp',
                     'image/svg+xml',
                     'image/heic',
-                    'image/heif'
+                    'image/heif',
+                    'image/avif'
                 ],
                 providedPasteEditKinds: []
             }
@@ -900,11 +972,23 @@ async function uploadImageToCloudflare(
     fileName?: string
 ): Promise<string | null> {
     let tempCompressedPath: string | null = null;
+    let tempAvifConvertedPath: string | null = null;
     
     try {
+        // Convert AVIF to compatible format if needed (before compression)
+        const avifResult = await convertAvifIfNeeded(imagePath);
+        let currentPath = avifResult.path;
+        tempAvifConvertedPath = avifResult.wasConverted ? avifResult.path : null;
+        
+        if (avifResult.wasConverted) {
+            const config2 = vscode.workspace.getConfiguration('cloudflareImagesUpload');
+            const format = config2.get<string>('avifConversionFormat', 'webp').toUpperCase();
+            vscode.window.showInformationMessage(`AVIF image converted to ${format} for upload`);
+        }
+        
         // Check if compression is needed
         const compressionConfig = getCompressionConfig();
-        const compressionResult = await compressImageIfNeeded(imagePath, compressionConfig);
+        const compressionResult = await compressImageIfNeeded(currentPath, compressionConfig);
         
         const uploadPath = compressionResult.path;
         tempCompressedPath = compressionResult.wasCompressed ? compressionResult.path : null;
@@ -927,15 +1011,29 @@ async function uploadImageToCloudflare(
         const addMetadata = vsConfig.get<boolean>('addMetadata', true);
         
         if (addMetadata) {
-            // Get version from package.json dynamically
-            const extensionVersion = vscode.extensions.getExtension('miguelcaetanodias.cloudflare-images-upload')?.packageJSON?.version || 'unknown';
-            const metadata = {
+            const defaultTemplate: Record<string, string> = {
                 uploadedBy: 'vscode-cloudflare-images-extension',
-                version: extensionVersion,
-                uploadedAt: new Date().toISOString(),
-                fileName: fileName || path.basename(imagePath)
+                version: '${extensionVersion}',
+                uploadedAt: '${timestamp}',
+                fileName: '${fileName}'
             };
-            formData.append('metadata', JSON.stringify(metadata));
+            const template = vsConfig.get<Record<string, string>>('metadataTemplate', defaultTemplate);
+            const actualFileName = fileName || path.basename(imagePath);
+            const fileStats = fs.statSync(uploadPath);
+            
+            const metadata = resolveMetadataTemplate(template, {
+                fileName: actualFileName,
+                filePath: imagePath,
+                fileSize: fileStats.size
+            });
+
+            const metadataJson = JSON.stringify(metadata);
+            if (metadataJson.length > 1024) {
+                vscode.window.showWarningMessage(
+                    `Metadata exceeds Cloudflare's 1024-byte limit (${metadataJson.length} bytes). It may be truncated.`
+                );
+            }
+            formData.append('metadata', metadataJson);
         }
 
         const response = await fetch(
@@ -971,7 +1069,7 @@ async function uploadImageToCloudflare(
             await addImageToCache(fileHash, imageUrl, fileName);
         }
         
-        // Clean up temp compressed file
+        // Clean up temp files
         if (tempCompressedPath) {
             try {
                 fs.unlinkSync(tempCompressedPath);
@@ -979,13 +1077,27 @@ async function uploadImageToCloudflare(
                 // Ignore cleanup errors
             }
         }
+        if (tempAvifConvertedPath) {
+            try {
+                fs.unlinkSync(tempAvifConvertedPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
         
         return imageUrl;
     } catch (error) {
-        // Clean up temp compressed file on error
+        // Clean up temp files on error
         if (tempCompressedPath) {
             try {
                 fs.unlinkSync(tempCompressedPath);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+        if (tempAvifConvertedPath) {
+            try {
+                fs.unlinkSync(tempAvifConvertedPath);
             } catch (e) {
                 // Ignore cleanup errors
             }

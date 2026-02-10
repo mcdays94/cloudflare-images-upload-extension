@@ -18,6 +18,7 @@
 - **⚡ Progress Notifications**: Real-time upload progress feedback
 - **🔍 Smart Duplicate Detection**: Automatically detects and reuses previously uploaded images (no redundant uploads!)
 - **📦 Automatic Compression**: Compress oversized images before upload with configurable quality and size limits
+- **🔄 AVIF Auto-Conversion**: Automatically converts AVIF images to a compatible format (WebP, JPEG, or PNG) before upload
 - **🏷️ Automatic Metadata Tagging**: Tags uploaded images with extension info for easy tracking and management
 - **🗑️ Optional Delete on Removal**: Ask to delete from Cloudflare when removing image URLs (with optional auto-delete)
 - **🔐 Signed URLs**: Generate signed URLs to restrict access to specific variants, preventing unauthorized access to other image sizes
@@ -38,16 +39,18 @@
 ![Delete Function](media/Delete_Export.gif)
 
 ### Automatic Metadata Tagging
-All uploaded images are automatically tagged with metadata for easy tracking:
+All uploaded images are automatically tagged with customizable metadata for easy tracking:
 
 ![Metadata in Cloudflare Dashboard](media/Metadata_Screenshot.png)
 
-The metadata includes:
+The default metadata includes:
 - **uploadedBy**: Identifies images from this extension
 - **version**: Extension version used
 - **uploadedAt**: Timestamp of upload
 - **fileName**: Original filename
-double
+
+You can fully customize the metadata template with your own fields and dynamic variables — see [Metadata Settings](#metadata-settings) for details.
+
 ## Installation
 
 ### From Marketplace
@@ -108,6 +111,7 @@ The extension automatically compresses images that exceed the configured file si
 | JPEG | JPEG | Quality reduced per settings |
 | PNG | JPEG or PNG | Converts to JPEG by default; enable "Preserve PNG Format" to keep PNG |
 | WebP | WebP | Quality reduced, format preserved |
+| AVIF | WebP, JPEG, or PNG | Auto-converted (configurable via `AVIFConversionFormat` setting) |
 | HEIC/HEIF | JPEG | iPhone photos converted |
 | BMP | JPEG | Converted for better compression |
 | GIF | *(skipped)* | Animated format - not compressed |
@@ -123,13 +127,46 @@ The extension automatically compresses images that exceed the configured file si
 | **Signed URL Expiration** | `0` | Expiration time in seconds (0 = never) |
 | **Signing Key** | *(auto-fetched)* | Optional manual override |
 
+### Metadata Settings
+
+The extension can tag each upload with custom metadata. Enable with **Add Metadata** and customize the template.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Add Metadata** | `true` | Tag uploaded images with metadata |
+| **Metadata Template** | *(see below)* | Custom key-value pairs with dynamic variable support |
+
+**Default template:**
+```json
+{
+  "uploadedBy": "vscode-cloudflare-images-extension",
+  "version": "${extensionVersion}",
+  "uploadedAt": "${timestamp}",
+  "fileName": "${fileName}"
+}
+```
+
+**Available dynamic variables:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `${fileName}` | Original file name | `photo.avif` |
+| `${timestamp}` | ISO 8601 datetime | `2026-02-10T10:45:00.000Z` |
+| `${date}` | Date only | `2026-02-10` |
+| `${time}` | Time only | `10:45:00` |
+| `${extensionVersion}` | Extension version | `0.7.0` |
+| `${fileSize}` | File size in bytes | `1048576` |
+| `${fileExtension}` | File extension | `.png` |
+| `${workspaceName}` | Workspace name | `my-project` |
+
+> **Note:** Cloudflare limits metadata to 1024 bytes total. A warning is shown if your resolved metadata exceeds this limit.
+
 ### Other Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | **Delete On Removal** | `false` | Ask to delete image from Cloudflare when URL is removed from document |
 | **Delete Without Confirmation** | `false` | Skip confirmation dialog when deleting (auto-delete) |
-| **Add Metadata** | `true` | Tag uploaded images with extension info for tracking |
 
 ### Getting Your API Token
 
@@ -275,6 +312,12 @@ If you find this extension helpful and it saves you time, consider buying me a c
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/miguelcaetanodias)
 
 ## Release Notes
+
+### 0.7.0
+
+- **AVIF Auto-Conversion**: AVIF images are automatically converted to a Cloudflare-compatible format before upload
+- **Configurable AVIF Output**: New setting to choose conversion format (WebP, JPEG, or PNG — defaults to WebP) with per-format pros/cons descriptions
+- **Custom Metadata Templates**: Define your own metadata key-value pairs with dynamic variables (`${fileName}`, `${timestamp}`, `${date}`, `${workspaceName}`, etc.)
 
 ### 0.6.1
 
